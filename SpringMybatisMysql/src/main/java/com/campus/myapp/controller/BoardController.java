@@ -135,6 +135,23 @@ public class BoardController {
 		return entity;
 	}
 
+	// 글 삭제
+	@GetMapping("boardDel")
+	public ModelAndView boardDel(int no, HttpSession session) {
+		String userid = (String)session.getAttribute("logId");
+		
+		int result = service.boardDelete(no, userid);
+		
+		ModelAndView mav = new ModelAndView();
+		if(result>0) {	//삭제
+			mav.setViewName("redirect:boardList");	// list로 이동한 컨트롤러를 호출
+		}else {	//삭제실패
+			mav.addObject("no", no);
+			mav.setViewName("redirect:boardView");
+		}
+		return mav;
+	}
+	
 	// 글 수정 메소드
 	public String getEditFailMessage() {
 		String msg = "<script>";
@@ -145,7 +162,6 @@ public class BoardController {
 	}
 
 	// 글 수정 메소드
-
 	public String getEditSuccessMessage(int no) {
 		String msg = "<script>";
 		msg += "alert('글 수정이 완료되였습니다.\\n글 내용으로 이동합니다.');";
@@ -153,4 +169,6 @@ public class BoardController {
 		msg += "</script>";
 		return msg;
 	}
+	
+	
 }

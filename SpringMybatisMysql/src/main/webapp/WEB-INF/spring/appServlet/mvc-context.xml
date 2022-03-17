@@ -18,8 +18,11 @@
 			<mvc:mapping path="/board/boardWriteOk"/>
 			<mvc:mapping path="/board/boardEdit"/>
 			<mvc:mapping path="/board/boardEditOk"/>
+			<mvc:mapping path="/board/boardDel"/>
 			<mvc:mapping path="/member/memberEdit"/>
 			<mvc:mapping path="/member/memberEditOk"/>
+			<mvc:mapping path="/data/write"/>
+			
 			<bean class="com.campus.myapp.interceptor.LoginInterceptor"/>
 		</mvc:interceptor>
 	</mvc:interceptors>
