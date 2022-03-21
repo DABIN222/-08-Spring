@@ -2,6 +2,7 @@ package com.campus.myapp.controller;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -173,28 +174,152 @@ public class DataController {
 	
 	//수정(DB)
 	@PostMapping("/data/editOk")
-	public ResponseEntity<String> editOk(DataVO vo, HttpSession session) {
+	public ResponseEntity<String> editOk(DataVO vo, HttpSession session, HttpServletRequest req) {
 		vo.setUserid((String)session.getAttribute("logId"));
 		String path = session.getServletContext().getRealPath("/upload");
 		
-		System.out.println(vo.toString());
-		if(vo.getDelFile()!=null) {
-			for(int k=0; k<vo.getDelFile().length; k++) {
-				System.out.println(vo.getDelFile()[k]);
-			}
-		}
-	
+		/////////////////////////
+		/*
+		 * System.out.println(vo.toString()); if(vo.getDelFile()!=null) { for(int k=0;
+		 * k<vo.getDelFile().length; k++) { System.out.println(vo.getDelFile()[k]); } }
+		 */
+		
+		///////////////////////
+		
 		ResponseEntity<String> entity = null;
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Content-Type", "text/html; charset=UTF-8");
+		
+		List<String> fileList = new ArrayList<String>();	// 새로 DB에 업데이트 할 파일명 정리하는 컬렉션
+		List<String> newUpload = new ArrayList<String>();	//  새로업로드 한 파일 명
 		try {
+			//	1. DB에서 파일명 가져오기
+			DataVO dbfileVO = service.getFileName(vo.getNo());
+			fileList.add(dbfileVO.getFilename1());
+			if(dbfileVO.getFilename2()!=null) fileList.add(dbfileVO.getFilename2());
+		
+			//	2. 삭제된 파일이 있을 경우 List에서 같은 파일명을 지운다.
+			if(vo.getDelFile() != null) {		// null은 삭제파일이 없다
+				for(String delFile : vo.getDelFile()) {
+					fileList.remove(delFile);
+				}
+			}
+			
+			//	3. 새로 업로드 하기
+			MultipartHttpServletRequest mr = (MultipartHttpServletRequest)req;
+			
+			// 새로 업로드된 MultipartFile객체를 얻어오기
+			List<MultipartFile> newFileList = mr.getFiles("filename");
+			if(newFileList != null) {	// 새로 업로드 된 파일이 있으면
+				for(int i=0; i<newFileList.size(); i++) {
+					MultipartFile newMf = newFileList.get(i);
+					String newUploadFilename = newMf.getOriginalFilename();
+					
+					// 리네임 작업
+					if(newUploadFilename != null && !newUploadFilename.equals("")) {
+						File f = new File(path, newUploadFilename);
+						if(f.exists()) {
+							//있으면 여기서 rename
+							for(int n=1;;n++) {
+								int point = newUploadFilename.lastIndexOf(".");
+								String fileNameNoExt = newUploadFilename.substring(0, point);
+								String ext = newUploadFilename.substring(point+1);
+								
+								//새로운 파일명 만들어 존재유무 확인
+								String nf = fileNameNoExt+ " ("+n+")."+ext;
+								f = new File(path, nf);
+								if(!f.exists()) {	//없으면
+									newUploadFilename = nf;
+									break;
+								}
+							}//for
+						}
+						//업로드
+						try {
+							newMf.transferTo(f);
+						}catch(Exception ee) {}
+						fileList.add(newUploadFilename);	//db에 등록할 파일명에 추가
+						newUpload.add(newUploadFilename);	//새로 업로드 목록 추가		
+					}
+				}//for
+			}//if
+			
+			// fileList에 있는 DB에 등록할 파일명을 filename1, filename2에 셋팅
+			for(int k=0; k<fileList.size(); k++) {
+				if(k==0) vo.setFilename1(fileList.get(k));
+				if(k==1) vo.setFilename2(fileList.get(k));
+			}
+			
+			// DB update
+			service.dataUpdate(vo);
+			
+			// DB수정되었을 때
+			if(vo.getDelFile()!=null) {
+				for(String fname:vo.getDelFile()) {
+					fileDelete(path, fname);
+				}
+			}			
+			
+			// 글 내용보기로 이동
+			String msg = "<script>alert('자료실 글이 수정되었습니다.\\n글내용보기로 이동합니다');";
+			msg += "location.href='/myapp/data/view?no="+vo.getNo()+"';</script>";
+			
+			entity = new ResponseEntity<String>(msg, headers, HttpStatus.OK);
 			
 		}catch(Exception e) {
 			e.printStackTrace();
+			//DB잘못수정했을때
+			for(String fname:newUpload) {
+				fileDelete(path, fname);
+			}
+			
+			//수정페이지로 이동
+			String msg = "<script>";
+			msg += "alert('글 수정 실패하였습니다'\\n수정폼으로 이동합니다)";
+			msg += "history.back();</script>";
+			entity = new ResponseEntity<String>(msg, headers, HttpStatus.BAD_REQUEST);
 		}
+		/*
+		 * for(String d:fileList) { System.out.println(d); }
+		 */
+		return entity;		
+	}
+	//자료실 삭제
+	@GetMapping("/data/dataDel")
+	public ResponseEntity<String> dataDel(int no, HttpSession session) {
+		String userid = (String)session.getAttribute("logId");
 		
+		String path = session.getServletContext().getRealPath("/upload");
+		
+		ResponseEntity<String> entity = null;
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Type", "text/html; charset=utf-8");
+		
+		try {
+			// 1. 삭제할 레코드의 파일명 얻어오기
+			DataVO dbFileVO= service.getFileName(no);
+			
+			// 2. 레코드 삭제
+			service.dataDelete(no, userid);
+			
+			// 3. 파일 삭제
+			fileDelete(path, dbFileVO.getFilename1());	//첫번째지우고
+			//두번째는 있을 때만, 널이 아니면
+			if(dbFileVO.getFilename2()!=null) {	//이름지운다
+				fileDelete(path, dbFileVO.getFilename2());
+			}
+			//	데이터는 안보내도 된다. 매개변수x
+			String msg = "<script>alert('글이 삭제되었습니다');location.href='/myapp/data/dataList';</script>";
+			
+			entity = new ResponseEntity<String>(msg, headers, HttpStatus.OK);
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			
+			String msg = "<script>alert('글 삭제에 실패하였습니다\\n글 내용보기로 이동합니다');history.back();</script>";
+			entity = new ResponseEntity<String>(msg, headers, HttpStatus.BAD_REQUEST);
+		}
 		return entity;
 		
 	}
-	
 }

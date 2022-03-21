@@ -14,6 +14,7 @@
 <div class="container">
 	<h1>자료실 목록</h1>
 	<a href="/myapp/data/write">글쓰기</a>
+	
 	<ul id="dataList">
 		<li>번호</li>
 		<li>제목</li>

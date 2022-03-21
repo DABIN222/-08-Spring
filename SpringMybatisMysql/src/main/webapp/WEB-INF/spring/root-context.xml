@@ -2,8 +2,10 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
 	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
-		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
 
 	<!-- Root Context: defines shared resources visible to all other web components -->
 	<!-- Mysql 데이터베이스 정보 설정 Data a = new Data(1, 'aa', bb) namespaces탭에서 mybatis-spring을 
@@ -37,6 +39,13 @@
 		<property name="maxUploadSize" value="-1"></property>
 		<property name="defaultEncoding" value="UTF-8"></property>
 	</bean>
+	
+	<!-- 트랜잭션처리를 위해서 namespace tx추가
+		dataSource를이용하여 transaction 객체를 생성한다.
+	 -->
+	 <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	 	<constructor-arg name="dataSource" ref="dataSource"></constructor-arg>
+	 </bean>
 
 	<mybatis-spring:scan
 		base-package="com.campus.myapp.dao" />

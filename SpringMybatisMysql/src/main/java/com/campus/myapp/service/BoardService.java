@@ -26,4 +26,7 @@ public interface BoardService {
 	
 	//글삭제
 	public int boardDelete(int no, String userid);
+	
+	//여러 레코드 삭제
+	public int boardMultiDelete(BoardVO vo);
 }

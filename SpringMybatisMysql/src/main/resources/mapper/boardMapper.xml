@@ -36,5 +36,13 @@
 	<delete id="boardDelete">
 		delete from board where no=#{param1} and userid=#{param2}
 	</delete>
-	
+	<delete id="boardMultiDelete">
+		delete from board
+		<where>
+			<foreach item="item" collection="noList" open="no in (" separator="," close=")">
+				#{item}
+			</foreach>
+			and userid=#{userid}
+		</where>
+	</delete>
 </mapper>

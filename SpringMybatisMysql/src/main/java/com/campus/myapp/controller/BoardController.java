@@ -170,5 +170,21 @@ public class BoardController {
 		return msg;
 	}
 	
+	// 여러개 레코드 삭제
+	@PostMapping("multiDel")
+	public ModelAndView multiDelete(BoardVO vo, HttpSession session) {
+		vo.setUserid((String)session.getAttribute("logId"));
+		
+		ModelAndView mav = new ModelAndView();
+		
+		service.boardMultiDelete(vo);
+		
+		mav.setViewName("redirect:boardList");
+		return mav;
+		
+	}
+	
+	
+	
 	
 }

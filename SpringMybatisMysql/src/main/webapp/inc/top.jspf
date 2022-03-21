@@ -36,7 +36,8 @@
 			</c:when>
 		</c:choose>
 		<li><a href="${url}/board/boardList">게시판</a></li>
-		<li><a href="/myapp/data/dataList">자료실</a></li>		
+		<li><a href="/myapp/data/dataList">자료실</a></li>
+		<li><a href="/myapp/board/boardTran">트렌잭션</a></li>			
 	</ul>
 
 </div>

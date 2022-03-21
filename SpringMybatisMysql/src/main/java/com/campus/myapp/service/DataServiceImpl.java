@@ -30,4 +30,19 @@ public class DataServiceImpl implements DataService {
 		return dao.dataView(no);
 	}
 
+	@Override
+	public DataVO getFileName(int no) {
+		return dao.getFileName(no);
+	}
+
+	@Override
+	public int dataUpdate(DataVO vo) {
+		return dao.dataUpdate(vo);
+	}
+
+	@Override
+	public int dataDelete(int no, String userid) {
+		return dao.dataDelete(no, userid);
+	}
+
 }
